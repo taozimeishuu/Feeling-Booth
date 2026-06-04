@@ -180,8 +180,8 @@ app.post('/api/tts', async (req, res) => {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
-  const ttsModel = process.env.TTS_MODEL || 'qwen3-tts-flash-2025-11-27';
-  const ttsVoice = process.env.TTS_VOICE || 'Ono Anna';
+  const ttsModel = process.env.TTS_MODEL || 'cosyvoice-v3-flash';
+  const ttsVoice = process.env.TTS_VOICE || 'longwan_v3';
 
   console.log(`🎙️ TTS 请求 | model: ${ttsModel} | voice: ${ttsVoice} | text: ${text.slice(0, 30)}...`);
 
