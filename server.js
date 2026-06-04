@@ -166,6 +166,108 @@ app.post('/api/chatroom', async (req, res) => {
 });
 
 // ==========================================
+// POST /api/tts — Qwen3-TTS-Flash 小野杏配音
+// ==========================================
+app.post('/api/tts', async (req, res) => {
+  const { text } = req.body;
+
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: 'text is required' });
+  }
+
+  const apiKey = process.env.QWEN_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API key not configured' });
+  }
+
+  const ttsModel = 'qwen3-tts-flash-2025-11-27';
+  const ttsVoice = 'Ono Anna';
+
+  console.log(`🎙️ TTS 请求 | voice: ${ttsVoice} | text: ${text.slice(0, 30)}...`);
+
+  try {
+    // 1. 调用 Qwen TTS API 获取音频 URL
+    const audioUrl = await _ttsGenerate(ttsModel, text, apiKey, ttsVoice);
+    if (!audioUrl) throw new Error('No audio URL');
+
+    // 2. 下载音频
+    const audioData = await _ttsDownload(audioUrl);
+    if (!audioData) throw new Error('No audio data');
+
+    console.log(`✅ TTS 成功 | size: ${audioData.length} bytes`);
+    res.set({
+      'Content-Type': 'audio/wav',
+      'Content-Length': audioData.length,
+      'Cache-Control': 'public, max-age=3600'
+    });
+    return res.send(audioData);
+
+  } catch (err) {
+    console.error('❌ TTS 错误:', err.message);
+    return res.status(502).json({ error: 'TTS failed' });
+  }
+});
+
+/** TTS: 调用生成接口，返回音频 URL */
+function _ttsGenerate(model, text, apiKey, voice) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      model: model,
+      input: { text: text },
+      parameters: { voice: voice || 'Ono Anna', format: 'mp3' }
+    });
+
+    const req = https.request({
+      hostname: 'dashscope.aliyuncs.com',
+      port: 443,
+      path: '/api/v1/services/aigc/multimodal-generation/generation',
+      method: 'POST',
+      agent: httpsAgent,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (resp) => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const url = json?.output?.audio?.url || null;
+          resolve(url);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+/** TTS: 下载音频二进制 */
+function _ttsDownload(url) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const req = https.request({
+      hostname: u.hostname,
+      port: 443,
+      path: u.pathname + u.search,
+      method: 'GET',
+      agent: httpsAgent
+    }, (resp) => {
+      const chunks = [];
+      resp.on('data', c => chunks.push(c));
+      resp.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// ==========================================
 // 启动
 // ==========================================
 app.listen(PORT, () => {

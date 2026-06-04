@@ -1,131 +1,88 @@
 /* ============================================
    情绪便利店 — tts.js
-   店员语音合成（Web Speech API）
-   音色定位：暖奶茶音色
-   温柔中低音 / 轻微气声 / 慢速自然 / 微笑感
+   店员语音：Qwen3-TTS-Flash 小野杏（Ono Anna）
+   后端 /api/tts 代理，API Key 不暴露在前端
    ============================================ */
 
 const TTS = {
   _enabled: true,
-  _synth: null,
-  _voice: null,
-  _speaking: false,
+  _audio: null,           // 当前播放的 Audio
+  _queue: [],             // 待播放文本队列
+  _loading: false,        // 是否正在加载
 
-  /** 音色参数 — 暖奶茶音色 */
-  _params: {
-    rate: 0.82,      // 语速：慢半拍，给用户呼吸空间
-    pitch: 0.82,     // 音高：中低音，温暖沉稳，不尖不嗲
-    volume: 0.68     // 音量：中低，像在安静夜晚轻声说话
-  },
-
-  /** 初始化 */
-  init() {
-    if (!('speechSynthesis' in window)) {
-      console.warn('🔇 TTS: 浏览器不支持语音合成');
-      this._enabled = false;
-      return;
-    }
-
-    this._synth = window.speechSynthesis;
-    this._selectVoice();
-
-    if (!this._voice) {
-      console.warn('🔇 TTS: 未找到合适的中文女声，使用系统默认');
-    }
-
-    console.log(
-      '🎙️ TTS 已就绪 |',
-      '声音:', this._voice ? this._voice.name : '系统默认',
-      '| 语速:', this._params.rate,
-      '| 音高:', this._params.pitch,
-      '| 音量:', this._params.volume
-    );
-  },
-
-  /** 选择最合适的中文女声 — 优先暖柔声线 */
-  _selectVoice() {
-    if (!this._synth) return;
-
-    const voices = this._synth.getVoices();
-
-    // 优先级：温暖度 > 语言匹配
-    // Sinji（zh-HK）声线通常比 Tingting 更柔，优先尝试
-    const prefs = [
-      'Sinji',             // macOS zh-HK 女声 — 声线偏柔，接近暖奶茶
-      'Tingting',          // macOS zh-CN 女声 — 清晰温和
-      'Ting-Ting',         // 另一种写法
-      'Meijia',            // macOS zh-TW 女声 — 台湾腔轻柔
-      'Mei-jia',
-      'zh-HK',
-      'zh-TW-female',
-      'zh-CN-female',
-      'cmn-CN-female'
-    ];
-
-    for (const pref of prefs) {
-      const v = voices.find(v =>
-        v.name.includes(pref) ||
-        (v.lang.startsWith('zh') && v.name.toLowerCase().includes(pref.toLowerCase()))
-      );
-      if (v) { this._voice = v; return; }
-    }
-
-    // 兜底：任意中文女声
-    const zhFemale = voices.find(v =>
-      v.lang.startsWith('zh') &&
-      (v.name.includes('female') || v.name.includes('woman') || v.name.includes('girl'))
-    );
-    if (zhFemale) { this._voice = zhFemale; return; }
-
-    // 任意中文
-    const anyZh = voices.find(v => v.lang.startsWith('zh'));
-    if (anyZh) { this._voice = anyZh; return; }
-
-    // 系统默认
-    this._voice = voices[0] || null;
-  },
-
-  /** 朗读文本（仅店员台词，不读旁白） */
+  /** 朗读文本（仅店员台词） */
   speak(text, isNarrator = false) {
-    if (!this._enabled || !this._synth || isNarrator) return;
-
+    if (!this._enabled || isNarrator || !text) return;
     this.stop();
 
-    // 清理文本：换行替换为逗号，句号后加停顿
-    const clean = text
-      .replace(/\n/g, '，')
-      .replace(/。/g, '。 ')
-      .replace(/、/g, '，');
+    // 排队
+    this._queue.push(text);
+    if (this._queue.length === 1) {
+      this._playNext();
+    }
+  },
 
-    const utter = new SpeechSynthesisUtterance(clean);
-    utter.voice = this._voice;
-    utter.rate = this._params.rate;
-    utter.pitch = this._params.pitch;
-    utter.volume = this._params.volume;
-    utter.lang = this._voice ? this._voice.lang : 'zh-CN';
+  /** 播放队列中下一条 */
+  async _playNext() {
+    if (this._queue.length === 0 || !this._enabled) return;
 
-    this._speaking = true;
+    const text = this._queue[0];
+    this._loading = true;
 
-    utter.onend = () => {
-      this._speaking = false;
-    };
+    try {
+      const resp = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text })
+      });
 
-    utter.onerror = (e) => {
-      if (e.error !== 'interrupted') {
-        console.warn('TTS error:', e.error);
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
       }
-      this._speaking = false;
-    };
 
-    this._synth.speak(utter);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+
+      this._audio = new Audio(url);
+      this._audio.onended = () => {
+        URL.revokeObjectURL(url);
+        this._audio = null;
+        // 播放完毕，取下一条
+        this._queue.shift();
+        this._playNext();
+      };
+
+      this._audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        this._audio = null;
+        this._queue.shift();
+        this._playNext();
+      };
+
+      this._audio.play().catch(() => {
+        // 用户可能还没交互，浏览器阻止自动播放
+        this._audio = null;
+        this._queue.shift();
+        this._playNext();
+      });
+
+    } catch (err) {
+      console.warn('TTS fetch failed:', err.message);
+      this._queue.shift();
+      this._playNext();
+    }
+
+    this._loading = false;
   },
 
   /** 停止朗读 */
   stop() {
-    if (this._synth && this._speaking) {
-      this._synth.cancel();
-      this._speaking = false;
+    if (this._audio) {
+      this._audio.pause();
+      this._audio = null;
     }
+    this._queue = [];
+    this._loading = false;
   },
 
   /** 切换开关 */
@@ -133,6 +90,11 @@ const TTS = {
     this._enabled = !this._enabled;
     if (!this._enabled) this.stop();
     return this._enabled;
+  },
+
+  /** 初始化（兼容旧接口） */
+  init() {
+    console.log('🎙️ TTS: Qwen3-TTS-Flash 小野杏 (Ono Anna)');
   },
 
   get enabled() {
