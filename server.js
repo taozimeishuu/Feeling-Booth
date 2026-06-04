@@ -8,6 +8,10 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
+const https = require('https');
+
+// 解决部分 macOS Node 环境 SSL 证书问题
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -67,6 +71,53 @@ function buildSystemPrompt(emotion, productName, productEffect) {
 }
 
 // ==========================================
+// Qwen API 请求封装（https 模块，绕过 SSL 证书问题）
+// ==========================================
+function _qwenRequest(model, messages, apiKey) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      model: model,
+      messages: messages,
+      temperature: 0.85,
+      max_tokens: 300,
+      top_p: 0.9
+    });
+
+    const req = https.request({
+      hostname: 'dashscope.aliyuncs.com',
+      port: 443,
+      path: '/compatible-mode/v1/chat/completions',
+      method: 'POST',
+      agent: httpsAgent,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (resp) => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => {
+        if (resp.statusCode !== 200) {
+          console.error(`❌ Qwen API HTTP ${resp.statusCode}:`, data.slice(0, 300));
+          reject(new Error(`HTTP ${resp.statusCode}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+// ==========================================
 // POST /api/chatroom
 // ==========================================
 app.post('/api/chatroom', async (req, res) => {
@@ -100,40 +151,14 @@ app.post('/api/chatroom', async (req, res) => {
   console.log(`📨 Qwen API 请求 | model: ${model} | 历史: ${(Array.isArray(history) ? history.length : 0)} 条`);
 
   try {
-    const resp = await fetch(
-      'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: messages,
-          temperature: 0.85,
-          max_tokens: 300,
-          top_p: 0.9
-        })
-      }
-    );
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      console.error(`❌ Qwen API 错误 ${resp.status}:`, errText);
-      return res.status(502).json({
-        reply: '嗯……信号好像不太好。可能是店里 Wi-Fi 又出问题了。不过没关系，你可以再说一次。'
-      });
-    }
-
-    const data = await resp.json();
+    const data = await _qwenRequest(model, messages, apiKey);
     const reply = data.choices?.[0]?.message?.content || '嗯，我听到了。';
 
     console.log(`✅ Qwen 回复 | ${reply.slice(0, 60)}...`);
     return res.json({ reply });
 
   } catch (err) {
-    console.error('❌ Qwen API 网络错误:', err.message);
+    console.error('❌ Qwen API 错误:', err.message);
     return res.status(502).json({
       reply: '啊，信号不太好……不过没关系，再说一次就好。我还在听。'
     });
