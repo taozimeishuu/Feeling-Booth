@@ -1,6 +1,6 @@
 /* ============================================
    情绪便利店 — tts.js
-   店员语音：Qwen3-TTS-Flash 小野杏（Ono Anna）
+   店员语音：CosyVoice 龙婉（longwan_v3）
    后端 /api/tts 代理，API Key 不暴露在前端
    ============================================ */
 
@@ -94,7 +94,7 @@ const TTS = {
 
   /** 初始化（兼容旧接口） */
   init() {
-    console.log('🎙️ TTS: Qwen3-TTS-Flash 小野杏 (Ono Anna)');
+    console.log('🎙️ TTS: CosyVoice 龙婉 (longwan_v3) — 细腻柔声女');
   },
 
   get enabled() {

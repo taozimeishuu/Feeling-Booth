@@ -166,7 +166,7 @@ app.post('/api/chatroom', async (req, res) => {
 });
 
 // ==========================================
-// POST /api/tts — Qwen3-TTS-Flash 小野杏配音
+// POST /api/tts — CosyVoice 龙婉 配音
 // ==========================================
 app.post('/api/tts', async (req, res) => {
   const { text } = req.body;
@@ -180,23 +180,21 @@ app.post('/api/tts', async (req, res) => {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
-  const ttsModel = 'qwen3-tts-flash-2025-11-27';
-  const ttsVoice = 'Ono Anna';
+  const ttsModel = process.env.TTS_MODEL || 'cosyvoice-v3-flash';
+  const ttsVoice = process.env.TTS_VOICE || 'longwan_v3';
 
-  console.log(`🎙️ TTS 请求 | voice: ${ttsVoice} | text: ${text.slice(0, 30)}...`);
+  console.log(`🎙️ TTS 请求 | model: ${ttsModel} | voice: ${ttsVoice} | text: ${text.slice(0, 30)}...`);
 
   try {
-    // 1. 调用 Qwen TTS API 获取音频 URL
     const audioUrl = await _ttsGenerate(ttsModel, text, apiKey, ttsVoice);
     if (!audioUrl) throw new Error('No audio URL');
 
-    // 2. 下载音频
     const audioData = await _ttsDownload(audioUrl);
     if (!audioData) throw new Error('No audio data');
 
     console.log(`✅ TTS 成功 | size: ${audioData.length} bytes`);
     res.set({
-      'Content-Type': 'audio/wav',
+      'Content-Type': 'audio/mpeg',
       'Content-Length': audioData.length,
       'Cache-Control': 'public, max-age=3600'
     });
@@ -208,19 +206,23 @@ app.post('/api/tts', async (req, res) => {
   }
 });
 
-/** TTS: 调用生成接口，返回音频 URL */
+/** TTS: CosyVoice SpeechSynthesizer → 返回音频 URL */
 function _ttsGenerate(model, text, apiKey, voice) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
       model: model,
-      input: { text: text },
-      parameters: { voice: voice || 'Ono Anna', format: 'mp3' }
+      input: {
+        text: text,
+        voice: voice || 'longwan_v3',
+        format: 'mp3',
+        sample_rate: 24000
+      }
     });
 
     const req = https.request({
       hostname: 'dashscope.aliyuncs.com',
       port: 443,
-      path: '/api/v1/services/aigc/multimodal-generation/generation',
+      path: '/api/v1/services/audio/tts/SpeechSynthesizer',
       method: 'POST',
       agent: httpsAgent,
       headers: {
@@ -234,8 +236,7 @@ function _ttsGenerate(model, text, apiKey, voice) {
       resp.on('end', () => {
         try {
           const json = JSON.parse(data);
-          const url = json?.output?.audio?.url || null;
-          resolve(url);
+          resolve(json?.output?.audio?.url || null);
         } catch (e) {
           reject(e);
         }
