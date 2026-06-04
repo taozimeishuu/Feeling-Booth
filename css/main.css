@@ -227,10 +227,13 @@ body {
   background: rgba(20, 15, 5, 0.7);
 }
 #receipt-modal.visible {
-  opacity: 1; pointer-events: all;
+  opacity: 1;
+  /* 弹层背景不阻挡点击，让底下对话框按钮可用 */
+  pointer-events: none;
 }
 
 .receipt-paper {
+  pointer-events: all;
   background: var(--clr-receipt-bg);
   color: var(--clr-receipt-text);
   width: 70%; max-width: 480px;
@@ -242,6 +245,7 @@ body {
   box-shadow: 0 8px 40px rgba(0,0,0,0.5);
   animation: receiptUnfold 0.5s ease;
   position: relative;
+  cursor: pointer;
 }
 .receipt-paper::before {
   content: '';

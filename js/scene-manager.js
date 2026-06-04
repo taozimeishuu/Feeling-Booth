@@ -34,6 +34,14 @@ const SceneManager = {
     this._heatingTextEl = document.getElementById('heating-text');
     this._receiptEl = document.getElementById('receipt-modal');
 
+    // 点击小票纸张 → 关闭小票
+    const receiptPaper = document.querySelector('.receipt-paper');
+    if (receiptPaper && this._receiptEl) {
+      receiptPaper.addEventListener('click', () => {
+        this._receiptEl.classList.remove('visible');
+      });
+    }
+
     // 聊天事件
     if (this._chatSendBtn) {
       this._chatSendBtn.addEventListener('click', () => this._handleChatSend());
