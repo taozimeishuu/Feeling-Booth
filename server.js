@@ -180,8 +180,8 @@ app.post('/api/tts', async (req, res) => {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
-  const ttsModel = process.env.TTS_MODEL || 'cosyvoice-v3-flash';
-  const ttsVoice = process.env.TTS_VOICE || 'longwan_v3';
+  const ttsModel = process.env.TTS_MODEL || 'qwen3-tts-flash-2025-11-27';
+  const ttsVoice = process.env.TTS_VOICE || 'Ono Anna';
 
   console.log(`🎙️ TTS 请求 | model: ${ttsModel} | voice: ${ttsVoice} | text: ${text.slice(0, 30)}...`);
 
@@ -206,23 +206,23 @@ app.post('/api/tts', async (req, res) => {
   }
 });
 
-/** TTS: CosyVoice SpeechSynthesizer → 返回音频 URL */
+/** TTS: 调用生成接口，返回音频 URL（兼容 Qwen/CosyVoice 两种端点） */
 function _ttsGenerate(model, text, apiKey, voice) {
   return new Promise((resolve, reject) => {
-    const body = JSON.stringify({
-      model: model,
-      input: {
-        text: text,
-        voice: voice || 'longwan_v3',
-        format: 'mp3',
-        sample_rate: 24000
-      }
-    });
+    const isCosyVoice = model.startsWith('cosyvoice');
+
+    const body = isCosyVoice
+      ? JSON.stringify({ model, input: { text, voice: voice || 'longwan_v3', format: 'mp3', sample_rate: 24000 } })
+      : JSON.stringify({ model, input: { text }, parameters: { voice: voice || 'Ono Anna', format: 'mp3' } });
+
+    const apiPath = isCosyVoice
+      ? '/api/v1/services/audio/tts/SpeechSynthesizer'
+      : '/api/v1/services/aigc/multimodal-generation/generation';
 
     const req = https.request({
       hostname: 'dashscope.aliyuncs.com',
       port: 443,
-      path: '/api/v1/services/audio/tts/SpeechSynthesizer',
+      path: apiPath,
       method: 'POST',
       agent: httpsAgent,
       headers: {
@@ -237,9 +237,7 @@ function _ttsGenerate(model, text, apiKey, voice) {
         try {
           const json = JSON.parse(data);
           resolve(json?.output?.audio?.url || null);
-        } catch (e) {
-          reject(e);
-        }
+        } catch (e) { reject(e); }
       });
     });
     req.on('error', reject);
