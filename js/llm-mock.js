@@ -1,44 +1,74 @@
 /* ============================================
    情绪便利店 — llm-mock.js
-   店员聊天回复（温柔大姐姐语气）
-   不说教、不催促、不强行积极，慢慢陪伴
+   聊天模块：优先调用后端 /api/chatroom（Qwen）
+   后端不可用时降级为本地预设回复
    ============================================ */
 
 const LLM = {
+  /** 发送消息 */
   async sendMessage(userText, chatHistory) {
-    // 模拟延迟
-    const delay = 400 + Math.random() * 600;
-    await new Promise(r => setTimeout(r, delay));
+    // 构建符合后端格式的历史记录
+    const history = chatHistory
+      .filter(m => m.role === 'player' || m.role === 'clerk')
+      .map(m => ({
+        role: m.role === 'clerk' ? 'assistant' : 'user',
+        content: m.text
+      }));
 
-    if (CONFIG.LLM_API_ENDPOINT) {
-      return await this._callRealAPI(userText, chatHistory);
+    // 尝试调用后端 Qwen API
+    try {
+      const reply = await this._callBackend(userText, history);
+      if (reply) return reply;
+    } catch (err) {
+      console.warn('⚠️ 后端 API 不可用，使用本地回复:', err.message);
     }
 
+    // 降级：本地 mock 回复
     return this._getLocalResponse(userText, chatHistory);
   },
 
-  async _callRealAPI(userText, chatHistory) {
-    const resp = await fetch(CONFIG.LLM_API_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: 'system',
-            content: '你是情绪便利店的店员。你温柔、耐心，像一个大姐姐。你从不说教、不催促、不强行鼓励。你只是陪用户慢慢走、慢慢选、慢慢坐下来。回复要温暖简短（2-3句话），用"你"不用"您"。'
-          },
-          ...chatHistory.map(m => ({
-            role: m.role === 'clerk' ? 'assistant' : 'user',
-            content: m.text
-          })),
-          { role: 'user', content: userText }
-        ]
-      })
-    });
-    const data = await resp.json();
-    return data.content || data.message || '嗯，我听到了。';
+  /** 调用后端 /api/chatroom */
+  async _callBackend(userText, history) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const resp = await fetch('/api/chatroom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userText,
+          history: history.slice(-20),   // 最近 20 轮
+          emotion: GameState.selectedDrinkDesc || '',
+          product: {
+            name: GameState.selectedDrink || '',
+            effect: GameState.selectedDrinkDesc || ''
+          }
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeout);
+
+      if (!resp.ok) return null;
+
+      const data = await resp.json();
+      return data.reply || null;
+
+    } catch (err) {
+      clearTimeout(timeout);
+      throw err;
+    }
   },
 
+  /** 调用真实 LLM API（旧版兼容） */
+  async _callRealAPI(userText, chatHistory) {
+    return null; // 已迁移到 _callBackend
+  },
+
+  // ==========================================
+  // 本地预设回复（降级用）
+  // ==========================================
   _getLocalResponse(userText, chatHistory) {
     const t = userText;
 

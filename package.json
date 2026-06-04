@@ -1,0 +1,13 @@
+{
+  "name": "emotional-convenience-store",
+  "version": "1.0.0",
+  "description": "情绪便利店 — 治愈系互动网页/视觉小说",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0"
+  }
+}

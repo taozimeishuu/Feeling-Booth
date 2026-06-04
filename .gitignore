@@ -13,5 +13,8 @@
 # Node
 node_modules/
 
+# 环境变量（包含敏感信息）
+.env
+
 # Logs
 *.log
