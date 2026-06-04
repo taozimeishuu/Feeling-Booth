@@ -105,6 +105,9 @@
     <!-- 9. 语音开关 -->
     <button id="tts-toggle" title="店员语音开关">🔊</button>
 
+    <!-- 10. 背景音乐开关 -->
+    <button id="bgm-toggle" title="背景音乐开关">🎵</button>
+
   </div>
 
   <!-- ============================================ -->
@@ -135,17 +138,40 @@
         console.log('🔊 店员语音已开启，点击右上角按钮切换');
         console.log('');
 
-        // 初始化语音
-        TTS.init();
-        // Voice list 可能异步加载，延迟再试一次
-        if (!TTS._voice) {
-          window.speechSynthesis.onvoiceschanged = () => TTS._selectVoice();
+        // ---- 背景音乐 ----
+        const bgm = new Audio('assets/bgm.mp3');
+        bgm.loop = true;
+        bgm.volume = 0.18;  // 低声背景，不抢戏
+        let bgmOn = true;
+
+        // 浏览器要求用户交互后才能播放
+        const tryPlayBgm = () => {
+          if (bgmOn && bgm.paused) {
+            bgm.play().catch(() => {});
+          }
+          document.removeEventListener('click', tryPlayBgm);
+        };
+        document.addEventListener('click', tryPlayBgm);
+
+        const bgmBtn = document.getElementById('bgm-toggle');
+        if (bgmBtn) {
+          bgmBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bgmOn = !bgmOn;
+            bgmBtn.textContent = bgmOn ? '🎵' : '🔇';
+            if (bgmOn) { bgm.play().catch(() => {}); }
+            else { bgm.pause(); }
+          });
         }
+
+        // ---- 初始化语音 ----
+        TTS.init();
 
         // 语音开关按钮
         const ttsBtn = document.getElementById('tts-toggle');
         if (ttsBtn) {
-          ttsBtn.addEventListener('click', () => {
+          ttsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const on = TTS.toggle();
             ttsBtn.textContent = on ? '🔊' : '🔇';
           });

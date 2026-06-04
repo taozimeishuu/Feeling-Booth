@@ -363,10 +363,9 @@ body {
 }
 #chat-back-btn:hover { border-color: var(--clr-warm-light); background: rgba(245,230,211,0.06); }
 
-/* ---------- 语音开关按钮 ---------- */
-#tts-toggle {
+/* ---------- 语音 / BGM 开关按钮 ---------- */
+#tts-toggle, #bgm-toggle {
   position: absolute;
-  top: 12px; right: 14px;
   z-index: 10;
   width: 38px; height: 38px;
   padding: 0;
@@ -382,7 +381,9 @@ body {
   transition: all 0.25s ease;
   -webkit-tap-highlight-color: transparent;
 }
-#tts-toggle:hover {
+#tts-toggle { top: 12px; right: 14px; }
+#bgm-toggle { top: 12px; right: 58px; }
+#tts-toggle:hover, #bgm-toggle:hover {
   background: rgba(44, 36, 22, 0.75);
   border-color: var(--clr-accent-border);
 }
