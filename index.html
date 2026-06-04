@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>情绪便利店</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/animations.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏪</text></svg>">
+</head>
+<body>
+
+  <!-- ============================================ -->
+  <!-- 舞台容器 (16:9)                                -->
+  <!-- ============================================ -->
+  <div id="stage">
+
+    <!-- 1. 背景层 -->
+    <img id="bg-layer" src="" alt="背景">
+
+    <!-- 2. 物品展示层 -->
+    <img id="item-display" src="" alt="商品">
+
+    <!-- 3. 角色立绘层 -->
+    <img id="sprite-layer"
+         src=""
+         alt="店员"
+         class="sprite-floating"
+         style="opacity: 0;">
+
+    <!-- 4. 加热中文字 -->
+    <div id="heating-text">正在加热中……<br>温度正在慢慢回来。</div>
+
+    <!-- 5. 对话框层 -->
+    <div id="dialog-box" class="warm-glow">
+      <p id="dialog-text"></p>
+      <div id="dialog-choices"></div>
+      <span id="dialog-continue-hint">点击继续</span>
+    </div>
+
+    <!-- 6. 聊天区域（休息区专用） -->
+    <div id="chat-area">
+      <div id="chat-messages"></div>
+      <div id="chat-input-row">
+        <input type="text" id="chat-input" placeholder="和店员说点什么……" maxlength="500">
+        <button id="chat-send-btn">发送</button>
+        <button id="chat-back-btn">离开便利店</button>
+      </div>
+    </div>
+
+    <!-- 7. 今日小票弹层 -->
+    <div id="receipt-modal">
+      <div class="receipt-paper">
+        <div class="receipt-title">情绪便利店 今日小票</div>
+
+        <div class="receipt-row label"><span>购买饮品</span><span id="receipt-drink">——</span></div>
+        <div class="receipt-row" style="font-size:0.85em;color:rgba(62,46,31,0.65);margin-bottom:6px;">
+          <span></span><span id="receipt-drink-desc"></span>
+        </div>
+
+        <div class="receipt-row label"><span>购买食物</span><span id="receipt-food">——</span></div>
+        <div class="receipt-row" style="font-size:0.85em;color:rgba(62,46,31,0.65);margin-bottom:6px;">
+          <span></span><span id="receipt-food-desc"></span>
+        </div>
+
+        <div class="receipt-row label"><span>饮品状态</span><span>已加热</span></div>
+
+        <hr class="receipt-divider">
+
+        <div class="receipt-row" style="font-weight:500;"><span>今日获得</span></div>
+        <div style="font-size:0.9em;color:rgba(62,46,31,0.7);margin-bottom:8px;line-height:1.6;">
+          一小段不用硬撑的时间<br>
+          一盏还亮着的灯<br>
+          一次被认真听见的机会
+        </div>
+
+        <div class="receipt-message">
+          谢谢你今天走进这里。
+          不管你现在有没有变好，
+          你都已经值得被温柔对待。
+
+          回到现实以后，
+          请先喝一点水，
+          慢一点呼吸，
+          别急着责怪自己。
+
+          欢迎下次光临。
+        </div>
+
+        <div class="receipt-row" style="margin-top:8px;font-size:0.8em;color:rgba(62,46,31,0.45);">
+          <span id="receipt-date"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. 过渡遮罩（初始激活，从黑场开始） -->
+    <div id="overlay" class="active"></div>
+
+  </div>
+
+  <!-- ============================================ -->
+  <!-- JavaScript (依赖顺序)                          -->
+  <!-- ============================================ -->
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/scenes.js"></script>
+  <script src="js/animation-controller.js"></script>
+  <script src="js/dialog.js"></script>
+  <script src="js/llm-mock.js"></script>
+  <script src="js/scene-manager.js"></script>
+
+  <!-- 初始化 -->
+  <script>
+    (function init() {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', onReady);
+      } else {
+        onReady();
+      }
+
+      function onReady() {
+        console.log('🏪 情绪便利店 — 开始营业');
+        console.log('💡 点击对话框可以快进文字');
+        console.log('💡 在休息区可以和店员自由聊天');
+        console.log('');
+
+        // 初始化所有模块
+        AnimationController.init();
+        Dialog.init();
+        SceneManager.init();
+
+        // 预加载所有背景图
+        preloadAll();
+
+        // 从 Scene 01 开始
+        SceneManager.loadScene('scene_01');
+      }
+
+      function preloadAll() {
+        // 预加载背景
+        Object.values(CONFIG.backgroundPaths).forEach(path => {
+          const img = new Image();
+          img.src = path;
+        });
+        // 预加载立绘
+        Object.values(CONFIG.characterSprites).forEach(pair => {
+          Object.values(pair).forEach(path => {
+            const img = new Image();
+            img.src = path;
+          });
+        });
+        // 预加载休息室立绘
+        if (CONFIG.restSprites) {
+          Object.values(CONFIG.restSprites).forEach(path => {
+            const img = new Image();
+            img.src = path;
+          });
+        }
+        // 预加载物品图
+        Object.values(CONFIG.itemPaths).forEach(path => {
+          const img = new Image();
+          img.src = path;
+        });
+      }
+    })();
+  </script>
+
+</body>
+</html>

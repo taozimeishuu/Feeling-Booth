@@ -1,0 +1,76 @@
+/* ============================================
+   情绪便利店 — animations.css
+   浮动、眨眼、淡入淡出、打字机等动效
+   ============================================ */
+
+/* ---------- 缓慢浮动（呼吸感，4-8px） ---------- */
+.sprite-floating {
+  animation: floatIdle 4.2s ease-in-out infinite;
+}
+
+@keyframes floatIdle {
+  0%   { transform: translateY(0px); }
+  25%  { transform: translateY(-5px); }
+  50%  { transform: translateY(-8px); }
+  75%  { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+/* 入场动画（从右侧轻微滑入） */
+@keyframes spriteSlideIn {
+  from { transform: translateX(16px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* ---------- 场景过渡 ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---------- 继续提示脉冲 ---------- */
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.85; }
+}
+
+/* ---------- 消息淡入 ---------- */
+@keyframes msgFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- 物品展示弹入 ---------- */
+@keyframes itemPopIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- 小票纸张展开 ---------- */
+@keyframes receiptUnfold {
+  from { opacity: 0; transform: scaleY(0.8) translateY(-10px); }
+  to   { opacity: 1; transform: scaleY(1) translateY(0); }
+}
+
+/* ---------- 暖光环境闪烁 ---------- */
+@keyframes warmGlow {
+  0%, 100% {
+    box-shadow:
+      0 4px 28px rgba(0,0,0,0.38),
+      inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  50% {
+    box-shadow:
+      0 4px 32px rgba(0,0,0,0.32),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+}
+.warm-glow {
+  animation: warmGlow 5s ease-in-out infinite;
+}
+
+/* ---------- 加热文字淡入淡出 ---------- */
+@keyframes heatingPulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}

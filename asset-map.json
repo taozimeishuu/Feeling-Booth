@@ -1,0 +1,36 @@
+{
+  "_instructions": "请根据 hint 描述，找到对应的图片素材，将 source 字段改为正确的 UUID 文件名。改完后运行 bash setup.sh。",
+  "_note": "10张竖版(1024x1536)用于立绘，9张横版(1672x941)用于背景，14张方形(1448x1086)可用于背景或物品。",
+  "sourceDir": "/Users/taozimeishu/Desktop/情绪便利店图片素材",
+
+  "backgrounds": {
+    "bg_outside":      { "source": "8b0a3067-a0e9-4348-a9c8-dcbcf5f55f10.png", "hint": "便利店外景（夜晚暖黄灯光）" },
+    "bg_inside":       { "source": "", "hint": "便利店内部全景" },
+    "bg_cashier":      { "source": "6a5ba676-d033-4efc-8df5-dc8be0738a6f.png", "hint": "收银台近景" },
+    "bg_shelf":        { "source": "7b463a74-0b53-49bf-aa28-ee3be3aeb366.png", "hint": "通用货架全景" },
+    "bg_drink_shelf":  { "source": "8b0a3067-a0e9-4348-a9c8-dcbcf5f55f10.png", "hint": "饮品货架（如无独立图，先复用 bg_shelf 的 source）" },
+    "bg_food_shelf":   { "source": "a8ac0cf8-b8ab-4de5-90ee-7f26dd64add3.png", "hint": "食品货架（如无独立图，先复用 bg_shelf 的 source）" },
+    "bg_heating":      { "source": "ace011fe-d308-4f44-b7ac-c02fe8e39940.png", "hint": "加热区/微波炉区域（如无独立图，先复用 bg_cashier 的 source）" },
+    "bg_rest":         { "source": "c179bf85-f933-4940-9926-761af83f4d3e.png", "hint": "休息区/用餐区" }
+  },
+
+  "sprites": {
+    "clerk_smile_open":   { "source": "059990f3-c5f0-42e9-8ddb-c168c90a93e3.png", "hint": "店员微笑（睁眼）" },
+    "clerk_smile_closed": { "source": "2102185a-9640-4da6-a2a3-e5e59f524017.png", "hint": "店员微笑（闭眼）- 如无闭眼图，复用 smile_open 的 source" },
+    "clerk_listen_open":   { "source": "4350bccb-2ab4-4c4b-8eb1-6e33f2adcf32.png", "hint": "店员倾听（睁眼）" },
+    "clerk_listen_closed": { "source": "50f6d14f-6bef-4948-b3c7-54c10896714d.png", "hint": "店员倾听（闭眼）- 如无闭眼图，复用 listen_open 的 source" },
+    "clerk_wave_open":    { "source": "63115b03-5bf3-4b07-b9f4-080987279da5.png", "hint": "店员招手（睁眼）" },
+    "clerk_wave_closed":  { "source": "93598f01-2531-48d3-a60a-f6fcf9db23e9.png", "hint": "店员招手（闭眼）- 如无闭眼图，复用 wave_open 的 source" },
+    "clerk_present_open":   { "source": "9feda370-89ed-410a-90a7-12df876b2a66.png", "hint": "店员展示商品（睁眼）" },
+    "clerk_present_closed": { "source": "b7d1536f-1540-4540-9575-236644b95af6.png", "hint": "店员展示商品（闭眼）- 如无闭眼图，复用 present_open 的 source" },
+    "clerk_drink_open":   { "source": "bcdad1a6-1953-43bd-94c1-68b0fae3bfaf.png", "hint": "店员拿饮品（睁眼）" },
+    "clerk_drink_closed": { "source": "e09fbcd7-9f62-4396-9d2d-13cb7ac01014.png", "hint": "店员拿饮品（闭眼）- 如无闭眼图，复用 drink_open 的 source" },
+    "clerk_food_open":    { "source": "bcdad1a6-1953-43bd-94c1-68b0fae3bfaf.png", "hint": "店员拿食物（睁眼）- 暂时复用 drink_open 的图" },
+    "clerk_food_closed":  { "source": "e09fbcd7-9f62-4396-9d2d-13cb7ac01014.png", "hint": "店员拿食物（闭眼）- 暂时复用 drink_closed 的图" }
+  },
+
+  "items": {
+    "item_drink": { "source": "60d7d80d-e2ae-4e56-bc6a-0041d5570392.png", "hint": "饮品物品图（热饮/咖啡杯）" },
+    "item_food":  { "source": "7a58af0e-5685-4553-ae89-766c4cbadee3.png", "hint": "食品物品图（便当/饭团/面包）" }
+  }
+}

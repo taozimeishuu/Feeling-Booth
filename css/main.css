@@ -1,0 +1,374 @@
+/* ============================================
+   情绪便利店 — main.css
+   核心布局、配色、对话框、按钮、小票、选项卡
+   ============================================ */
+
+/* ---------- CSS 变量 ---------- */
+:root {
+  --clr-warm-bg: #2C2416;
+  --clr-warm-light: #F5E6D3;
+  --clr-accent: #FFB347;
+  --clr-accent-hover: #FFC87C;
+  --clr-accent-soft: rgba(255, 179, 71, 0.12);
+  --clr-accent-border: rgba(255, 179, 71, 0.28);
+  --clr-dark-text: #3E2E1F;
+  --clr-overlay: rgba(20, 15, 5, 0.88);
+  --clr-dialog-bg-top: rgba(44, 36, 22, 0.94);
+  --clr-dialog-bg-bottom: rgba(44, 36, 22, 0.97);
+  --clr-receipt-bg: #FDF8F0;
+  --clr-receipt-text: #3E2E1F;
+  --clr-receipt-accent: #C8853C;
+
+  --font-main: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+  --font-size-dialog: clamp(0.95rem, 2vmin, 1.25rem);
+  --font-size-choice: clamp(0.85rem, 1.7vmin, 1.05rem);
+  --font-size-hint: clamp(0.7rem, 1.3vmin, 0.8rem);
+  --font-size-receipt: clamp(0.8rem, 1.6vmin, 0.95rem);
+
+  --dialog-padding-x: clamp(20px, 3.5vmin, 32px);
+  --dialog-padding-y: clamp(14px, 2.2vmin, 24px);
+  --dialog-border-radius: 14px;
+  --choice-gap: clamp(8px, 1.8vmin, 14px);
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: #0a0a0a;
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  user-select: none; -webkit-user-select: none;
+  cursor: default;
+}
+
+/* ---------- 舞台容器 (16:9) ---------- */
+body {
+  display: flex; align-items: center; justify-content: center;
+}
+
+#stage {
+  position: relative;
+  width: 100%; height: 100%;
+  max-width: calc(100vh * 16 / 9);
+  max-height: calc(100vw * 9 / 16);
+  margin: auto; overflow: hidden; background: #000;
+}
+
+/* ---------- 背景层 ---------- */
+#bg-layer {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; z-index: 1;
+  background: #1a1a1a;
+  transition: opacity 0.4s ease;
+}
+
+/* ---------- 物品展示层 ---------- */
+#item-display {
+  position: absolute;
+  left: 6%; bottom: 30%;
+  max-width: 32%; max-height: 36%;
+  object-fit: contain; z-index: 3;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 20px rgba(0,0,0,0.45));
+}
+#item-display.visible {
+  opacity: 1; transform: translateY(0);
+}
+
+/* ---------- 角色立绘层 ---------- */
+#sprite-layer {
+  position: absolute;
+  right: 2%; bottom: 0;
+  height: 88vh; width: auto;
+  z-index: 2;
+  transform-origin: center bottom;
+  transition: opacity 0.08s ease;
+  pointer-events: none;
+  filter: drop-shadow(0 0 18px rgba(0,0,0,0.25));
+}
+
+/* ---------- 对话框层 ---------- */
+#dialog-box {
+  position: absolute;
+  bottom: 5%; left: 50%;
+  transform: translateX(-50%);
+  width: 85%; min-height: 20%;
+  z-index: 4;
+  background: linear-gradient(180deg, var(--clr-dialog-bg-top), var(--clr-dialog-bg-bottom));
+  border-radius: var(--dialog-border-radius);
+  border: 1px solid var(--clr-accent-border);
+  padding: var(--dialog-padding-y) var(--dialog-padding-x);
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 28px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.03);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#dialog-text {
+  color: var(--clr-warm-light);
+  font-size: var(--font-size-dialog);
+  line-height: 1.85; letter-spacing: 0.04em;
+  flex: 1; min-height: 2em;
+  white-space: pre-line;
+}
+
+#dialog-continue-hint {
+  position: absolute; bottom: 10px; right: 28px;
+  color: var(--clr-accent);
+  font-size: var(--font-size-hint);
+  opacity: 0; pointer-events: none;
+  letter-spacing: 0.1em;
+  transition: opacity 0.3s ease;
+}
+#dialog-continue-hint.visible {
+  opacity: 0.65;
+  animation: hintPulse 2s ease-in-out infinite;
+}
+
+/* ---------- 选项按钮容器 ---------- */
+#dialog-choices {
+  display: flex; flex-wrap: wrap;
+  gap: var(--choice-gap);
+  justify-content: flex-end;
+  margin-top: 10px;
+  min-height: 0; max-height: 0; opacity: 0; overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease, margin-top 0.25s ease;
+}
+#dialog-choices.visible {
+  max-height: 200px; opacity: 1; margin-top: 14px;
+}
+
+/* ---------- 选项按钮 ---------- */
+.choice-btn {
+  padding: 9px 22px;
+  font-size: var(--font-size-choice);
+  font-family: var(--font-main);
+  color: var(--clr-warm-light);
+  background: var(--clr-accent-soft);
+  border: 1px solid var(--clr-accent-border);
+  border-radius: 22px;
+  cursor: pointer; letter-spacing: 0.05em;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.choice-btn:hover {
+  background: rgba(255,179,71,0.25);
+  border-color: var(--clr-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(255,179,71,0.12);
+}
+.choice-btn:active { transform: translateY(0); }
+
+/* ---------- 饮品选项卡 ---------- */
+#dialog-choices.drink-choices {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.drink-tab {
+  display: flex; flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 18px;
+  border-radius: 12px;
+  white-space: normal;
+  text-align: left;
+  width: 100%;
+}
+.drink-tab-label {
+  font-size: var(--font-size-dialog);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.drink-tab-hint {
+  font-size: var(--font-size-hint);
+  color: rgba(245,230,211,0.6);
+  font-weight: 400;
+}
+
+/* ---------- 过渡遮罩 ---------- */
+#overlay {
+  position: absolute; inset: 0; z-index: 5;
+  background: var(--clr-overlay);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+#overlay.active { opacity: 1; pointer-events: all; }
+
+/* ---------- 加热中文字 ---------- */
+#heating-text {
+  position: absolute;
+  top: 42%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 4;
+  display: none;
+  color: var(--clr-accent);
+  font-size: clamp(1.1rem, 2.4vmin, 1.5rem);
+  letter-spacing: 0.08em;
+  text-align: center;
+  animation: hintPulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ---------- 小票弹层 ---------- */
+#receipt-modal {
+  position: absolute; inset: 0;
+  z-index: 6;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease;
+  background: rgba(20, 15, 5, 0.7);
+}
+#receipt-modal.visible {
+  opacity: 1; pointer-events: all;
+}
+
+.receipt-paper {
+  background: var(--clr-receipt-bg);
+  color: var(--clr-receipt-text);
+  width: 70%; max-width: 480px;
+  padding: 28px 24px 20px;
+  border-radius: 6px;
+  font-size: var(--font-size-receipt);
+  line-height: 1.7;
+  letter-spacing: 0.03em;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  animation: receiptUnfold 0.5s ease;
+  position: relative;
+}
+.receipt-paper::before {
+  content: '';
+  position: absolute; top: 0; left: 10%; right: 10%;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, transparent, transparent 6px, var(--clr-receipt-accent) 6px, var(--clr-receipt-accent) 10px);
+}
+
+.receipt-title {
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--clr-receipt-accent);
+  letter-spacing: 0.08em;
+}
+
+.receipt-row {
+  display: flex; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.receipt-row.label { color: var(--clr-receipt-accent); font-weight: 500; }
+
+.receipt-divider {
+  border: none;
+  border-top: 1px dashed rgba(200,133,60,0.3);
+  margin: 10px 0;
+}
+
+.receipt-message {
+  margin-top: 8px;
+  color: var(--clr-receipt-accent);
+  font-style: italic;
+  font-size: 0.95em;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.receipt-close-hint {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 0.85em;
+  color: rgba(62,46,31,0.5);
+}
+
+/* ---------- 聊天区域（休息区） ---------- */
+#chat-area {
+  position: absolute;
+  bottom: 5%; left: 50%;
+  transform: translateX(-50%);
+  width: 82%; z-index: 4;
+  display: none; flex-direction: column; gap: 8px;
+}
+#chat-area.visible { display: flex; }
+
+#chat-messages {
+  flex: 1; overflow-y: auto;
+  max-height: 42vh;
+  padding: 12px 14px;
+  background: var(--clr-dialog-bg-top);
+  border-radius: var(--dialog-border-radius);
+  border: 1px solid var(--clr-accent-border);
+  color: var(--clr-warm-light);
+  font-size: var(--font-size-dialog);
+  line-height: 1.7; margin-bottom: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--clr-accent) transparent;
+}
+#chat-messages::-webkit-scrollbar { width: 4px; }
+#chat-messages::-webkit-scrollbar-track { background: transparent; }
+#chat-messages::-webkit-scrollbar-thumb { background: var(--clr-accent-border); border-radius: 2px; }
+
+.chat-msg { margin-bottom: 8px; animation: msgFadeIn 0.3s ease; }
+.chat-msg.user { text-align: right; color: var(--clr-accent); }
+.chat-msg.clerk { text-align: left; color: var(--clr-warm-light); }
+.chat-msg.typing { opacity: 0.5; animation: hintPulse 1.2s ease-in-out infinite; }
+
+#chat-input-row { display: flex; gap: 8px; }
+
+#chat-input {
+  flex: 1; padding: 10px 16px;
+  font-size: var(--font-size-dialog);
+  font-family: var(--font-main);
+  color: var(--clr-warm-light);
+  background: var(--clr-dialog-bg-top);
+  border: 1px solid var(--clr-accent-border);
+  border-radius: 22px; outline: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 0.3s ease;
+}
+#chat-input:focus { border-color: var(--clr-accent); }
+#chat-input::placeholder { color: rgba(245,230,211,0.32); }
+
+#chat-send-btn, #chat-back-btn {
+  padding: 10px 18px;
+  font-size: var(--font-size-choice);
+  font-family: var(--font-main);
+  border-radius: 22px; cursor: pointer;
+  white-space: nowrap; transition: all 0.25s ease;
+}
+#chat-send-btn {
+  color: var(--clr-warm-light);
+  background: var(--clr-accent-soft);
+  border: 1px solid var(--clr-accent-border);
+}
+#chat-send-btn:hover { background: rgba(255,179,71,0.25); border-color: var(--clr-accent); }
+
+#chat-back-btn {
+  color: var(--clr-warm-light);
+  background: transparent;
+  border: 1px solid rgba(245,230,211,0.18);
+}
+#chat-back-btn:hover { border-color: var(--clr-warm-light); background: rgba(245,230,211,0.06); }
+
+/* ---------- 响应式 ---------- */
+@media (max-aspect-ratio: 16/9) {
+  #stage { width: 100%; height: auto; aspect-ratio: 16/9; }
+}
+@media (min-aspect-ratio: 16/9) {
+  #stage { width: auto; height: 100%; aspect-ratio: 16/9; }
+}
+
+@media (pointer: coarse) {
+  .choice-btn { padding: 12px 26px; }
+  .drink-tab { padding: 14px 20px; }
+  #dialog-box { cursor: pointer; }
+}
