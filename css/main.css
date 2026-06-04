@@ -359,6 +359,30 @@ body {
 }
 #chat-back-btn:hover { border-color: var(--clr-warm-light); background: rgba(245,230,211,0.06); }
 
+/* ---------- 语音开关按钮 ---------- */
+#tts-toggle {
+  position: absolute;
+  top: 12px; right: 14px;
+  z-index: 10;
+  width: 38px; height: 38px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 38px;
+  text-align: center;
+  background: rgba(44, 36, 22, 0.55);
+  border: 1px solid rgba(255, 179, 71, 0.18);
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: all 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+#tts-toggle:hover {
+  background: rgba(44, 36, 22, 0.75);
+  border-color: var(--clr-accent-border);
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-aspect-ratio: 16/9) {
   #stage { width: 100%; height: auto; aspect-ratio: 16/9; }

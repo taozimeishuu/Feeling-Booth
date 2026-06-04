@@ -21,12 +21,15 @@ const Dialog = {
     this._hintEl = document.getElementById('dialog-continue-hint');
     this._boxEl = document.getElementById('dialog-box');
 
-    // 点击对话框跳过打字机
+    // 点击对话框跳过打字机 + 停止朗读
     if (this._boxEl) {
       this._boxEl.addEventListener('click', (e) => {
         if (e.target.closest('.choice-btn')) return;
         if (e.target.closest('.drink-tab')) return;
         if (e.target.closest('#chat-input-row')) return;
+
+        // 停止当前朗读
+        if (typeof TTS !== 'undefined') TTS.stop();
 
         if (GameState.isTyping) {
           this.skipTypewriter();
@@ -69,6 +72,7 @@ const Dialog = {
 
   /** 跳过打字机 */
   skipTypewriter() {
+    if (typeof TTS !== 'undefined') TTS.stop();
     if (this._typingTimer) {
       clearTimeout(this._typingTimer);
       this._typingTimer = null;
@@ -105,6 +109,11 @@ const Dialog = {
 
       await this.showText(line.text);
       GameState.addChat(line.speaker, line.text);
+
+      // 店员台词自动朗读（旁白不读）
+      if (!isNarrator && typeof TTS !== 'undefined') {
+        TTS.speak(line.text, false);
+      }
 
       // 等待用户点击继续（最后一条如果有选项则不等）
       if (i < dialogArray.length - 1 || !this._hasPendingChoices()) {
@@ -222,6 +231,7 @@ const Dialog = {
 
   /** 清除对话框 */
   clear() {
+    if (typeof TTS !== 'undefined') TTS.stop();
     if (this._textEl) {
       this._textEl.textContent = '';
       this._textEl.style.fontStyle = 'normal';

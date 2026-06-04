@@ -100,6 +100,9 @@
     <!-- 8. 过渡遮罩（初始激活，从黑场开始） -->
     <div id="overlay" class="active"></div>
 
+    <!-- 9. 语音开关 -->
+    <button id="tts-toggle" title="店员语音开关">🔊</button>
+
   </div>
 
   <!-- ============================================ -->
@@ -109,6 +112,7 @@
   <script src="js/state.js"></script>
   <script src="js/scenes.js"></script>
   <script src="js/animation-controller.js"></script>
+  <script src="js/tts.js"></script>
   <script src="js/dialog.js"></script>
   <script src="js/llm-mock.js"></script>
   <script src="js/scene-manager.js"></script>
@@ -126,7 +130,24 @@
         console.log('🏪 情绪便利店 — 开始营业');
         console.log('💡 点击对话框可以快进文字');
         console.log('💡 在休息区可以和店员自由聊天');
+        console.log('🔊 店员语音已开启，点击右上角按钮切换');
         console.log('');
+
+        // 初始化语音
+        TTS.init();
+        // Voice list 可能异步加载，延迟再试一次
+        if (!TTS._voice) {
+          window.speechSynthesis.onvoiceschanged = () => TTS._selectVoice();
+        }
+
+        // 语音开关按钮
+        const ttsBtn = document.getElementById('tts-toggle');
+        if (ttsBtn) {
+          ttsBtn.addEventListener('click', () => {
+            const on = TTS.toggle();
+            ttsBtn.textContent = on ? '🔊' : '🔇';
+          });
+        }
 
         // 初始化所有模块
         AnimationController.init();
