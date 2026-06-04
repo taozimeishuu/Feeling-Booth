@@ -59,8 +59,8 @@ const CONFIG = {
       closed: 'assets/sprites/clerk_listen_closed.png'
     },
     wave: {
-      open:   'assets/sprites/clerk_wave_open.png',
-      closed: 'assets/sprites/clerk_wave_closed.png'
+      open:   'assets/sprites/clerk_wave_anim.webp',
+      closed: 'assets/sprites/clerk_wave_anim.webp'
     },
     drink: {
       open:   'assets/sprites/clerk_drink_open.png',

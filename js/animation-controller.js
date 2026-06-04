@@ -85,11 +85,12 @@ const AnimationController = {
     this._refreshSprite();
   },
 
-  /** 刷新立绘图片 */
+  /** 刷新立绘图片（同一路径不重复设置，避免 webp/gif 动画被重置） */
   _refreshSprite() {
     if (!this._spriteEl) return;
     const path = this.getSpritePath(GameState.currentExpression, this._eyeState);
-    if (path) {
+    if (path && this._spriteEl.src !== path) {
+      // 只在路径真正变化时才更新 src，避免动画 webp/gif 被重置
       this._spriteEl.src = path;
     }
   },

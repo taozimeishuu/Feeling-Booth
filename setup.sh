@@ -63,8 +63,8 @@ copy_file "$SOURCE_DIR/店员欢迎光临图（睁眼）.png"   "$ASSETS_DIR/spr
 copy_file "$SOURCE_DIR/店员欢迎光临图（闭眼）.png"   "$ASSETS_DIR/sprites/clerk_welcome_closed.png" "welcome_closed"
 copy_file "$SOURCE_DIR/店员倾听图（睁眼）.png"       "$ASSETS_DIR/sprites/clerk_listen_open.png"    "listen_open"
 copy_file "$SOURCE_DIR/店员倾听图（闭眼）.png"       "$ASSETS_DIR/sprites/clerk_listen_closed.png"  "listen_closed"
-copy_file "$SOURCE_DIR/店员挥手告别图（睁眼）.png"   "$ASSETS_DIR/sprites/clerk_wave_open.png"      "wave_open"
-copy_file "$SOURCE_DIR/店员挥手告别图（闭眼）.png"   "$ASSETS_DIR/sprites/clerk_wave_closed.png"    "wave_closed"
+# wave 使用 material 里的动画 webp（睁眼/闭眼统一）
+copy_file "$SCRIPT_DIR/material/blink_transparent.webp" "$ASSETS_DIR/sprites/clerk_wave_anim.webp" "wave_anim (webp)"
 copy_file "$SOURCE_DIR/店员拿饮品图（睁眼）.png"     "$ASSETS_DIR/sprites/clerk_drink_open.png"     "drink_open"
 copy_file "$SOURCE_DIR/店员拿着饮品图（闭眼）.png"   "$ASSETS_DIR/sprites/clerk_drink_closed.png"   "drink_closed"
 copy_file "$SOURCE_DIR/店员展示饮品（睁眼）.png"     "$ASSETS_DIR/sprites/clerk_display_drink_open.png"   "display_drink_open"
